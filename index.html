@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content-Aware Move Tool Steps</title>
     <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
         .game-container {
-            width: 90%;
-            max-width: 600px;
+            width: 720px;
             margin: 20px auto;
             padding: 20px;
             font-family: 'Courier New', monospace;
@@ -23,6 +31,11 @@
                 25px 25px,
                 25px 25px;
             background-color: #f8f8f8;
+            height: 600px;
+            box-sizing: border-box;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         .instruction-box {
@@ -33,59 +46,98 @@
             border: 2px solid #20B2AA;
         }
 
-        .drag-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 20px 0;
+        .instruction-box h2 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .steps-container {
+            margin-bottom: 20px;
         }
 
         .draggable {
-            padding: 10px;
+            padding: 12px;
             background-color: white;
             border: 2px solid #20B2AA;
             border-radius: 5px;
             cursor: move;
-            margin: 5px;
+            margin: 5px 0;
             user-select: none;
             touch-action: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .draggable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(32, 178, 170, 0.3);
         }
 
         .drop-zone {
-            min-height: 150px;
+            min-height: 300px;
             border: 2px dashed #20B2AA;
             border-radius: 5px;
-            padding: 10px;
+            padding: 15px;
             background-color: rgba(255, 255, 255, 0.9);
+            margin-top: 20px;
+            margin-bottom: 60px;
         }
 
-        .correct {
-            background-color: #98FB98;
-            border-color: #3CB371;
-        }
-
-        .incorrect {
-            background-color: #FFB6C1;
-            border-color: #FF69B4;
+        .drop-zone p {
+            color: #666;
+            text-align: center;
+            margin-top: 0;
         }
 
         #check-button {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
             background-color: #20B2AA;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
+            font-family: inherit;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         #check-button:hover {
             background-color: #188F8A;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .draggable.dragging {
+        .correct {
+            background-color: #98FB98 !important;
+            border-color: #3CB371 !important;
+            animation: correctPulse 0.5s ease;
+        }
+
+        .incorrect {
+            background-color: #FFB6C1 !important;
+            border-color: #FF69B4 !important;
+            animation: incorrectShake 0.5s ease;
+        }
+
+        .dragging {
             opacity: 0.5;
+            transform: scale(1.05);
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
     </style>
 </head>
@@ -96,17 +148,15 @@
             <p>Arrange the steps in the correct order</p>
         </div>
 
-        <div class="drag-container">
-            <div class="steps-container">
-                <div class="draggable" draggable="true">Select the Content-Aware Move tool</div>
-                <div class="draggable" draggable="true">Draw a selection around the object</div>
-                <div class="draggable" draggable="true">Drag the selection to new position</div>
-                <div class="draggable" draggable="true">Let Photoshop blend the moved content</div>
-            </div>
+        <div class="steps-container">
+            <div class="draggable" draggable="true">Select the Content-Aware Move tool</div>
+            <div class="draggable" draggable="true">Draw a selection around the object</div>
+            <div class="draggable" draggable="true">Drag the selection to new position</div>
+            <div class="draggable" draggable="true">Let Photoshop blend the moved content</div>
+        </div>
 
-            <div class="drop-zone">
-                <p>Drop steps here in order</p>
-            </div>
+        <div class="drop-zone">
+            <p>Drop steps here in order</p>
         </div>
 
         <button id="check-button">Check Order</button>
@@ -146,6 +196,10 @@
                         dropZone.insertBefore(dragging, afterElement);
                     }
                 }
+            });
+
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
             });
 
             function getDragAfterElement(container, y) {
