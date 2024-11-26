@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .game-container {
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            background-image:
+                linear-gradient(#20B2AA 1px, transparent 1px),
+                linear-gradient(90deg, #20B2AA 1px, transparent 1px),
+                linear-gradient(#FFB6C1 1px, transparent 1px),
+                linear-gradient(90deg, #FFB6C1 1px, transparent 1px),
+                linear-gradient(rgba(32, 178, 170, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(32, 178, 170, 0.3) 1px, transparent 1px);
+            background-size: 
+                50px 50px,
+                50px 50px,
+                10px 10px,
+                10px 10px,
+                25px 25px,
+                25px 25px;
+            background-color: #f8f8f8;
+        }
+
+        .instruction-box {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #20B2AA;
+        }
+
+        .drag-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .draggable {
+            padding: 10px;
+            background-color: white;
+            border: 2px solid #20B2AA;
+            border-radius: 5px;
+            cursor: move;
+            margin: 5px;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .drop-zone {
+            min-height: 150px;
+            border: 2px dashed #20B2AA;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .correct {
+            background-color: #98FB98;
+            border-color: #3CB371;
+        }
+
+        .incorrect {
+            background-color: #FFB6C1;
+            border-color: #FF69B4;
+        }
+
+        #check-button {
+            background-color: #20B2AA;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        #check-button:hover {
+            background-color: #188F8A;
+        }
+
+        .draggable.dragging {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="instruction-box">
+            <h2>Content-Aware Move Tool Steps</h2>
+            <p>Arrange the steps in the correct order</p>
+        </div>
+
+        <div class="drag-container">
+            <div class="steps-container">
+                <div class="draggable" draggable="true">Select the Content-Aware Move tool</div>
+                <div class="draggable" draggable="true">Draw a selection around the object</div>
+                <div class="draggable" draggable="true">Drag the selection to new position</div>
+                <div class="draggable" draggable="true">Let Photoshop blend the moved content</div>
+            </div>
+
+            <div class="drop-zone">
+                <p>Drop steps here in order</p>
+            </div>
+        </div>
+
+        <button id="check-button">Check Order</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const draggables = document.querySelectorAll('.draggable');
+            const dropZone = document.querySelector('.drop-zone');
+            const checkButton = document.getElementById('check-button');
+
+            const correctOrder = [
+                "Select the Content-Aware Move tool",
+                "Draw a selection around the object",
+                "Drag the selection to new position",
+                "Let Photoshop blend the moved content"
+            ];
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                });
+            });
+
+            dropZone.addEventListener('dragover', e => {
+                e.preventDefault();
+                const dragging = document.querySelector('.dragging');
+                if (dragging) {
+                    const afterElement = getDragAfterElement(dropZone, e.clientY);
+                    if (afterElement == null) {
+                        dropZone.appendChild(dragging);
+                    } else {
+                        dropZone.insertBefore(dragging, afterElement);
+                    }
+                }
+            });
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')]
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            checkButton.addEventListener('click', () => {
+                const droppedItems = dropZone.querySelectorAll('.draggable');
+                droppedItems.forEach((item, index) => {
+                    if (item.textContent === correctOrder[index]) {
+                        item.classList.add('correct');
+                        item.classList.remove('incorrect');
+                    } else {
+                        item.classList.add('incorrect');
+                        item.classList.remove('correct');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
